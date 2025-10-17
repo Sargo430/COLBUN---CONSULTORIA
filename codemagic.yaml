@@ -13,37 +13,17 @@ workflows:
           mkdir -p ios
           if [ ! -f "ios/Podfile" ]; then
             echo "Creating new Podfile..."
-            cat > ios/Podfile <<'PODFILE'
-platform :ios, '15.0'
-
-use_frameworks!
-use_modular_headers!
-
-target 'Runner' do
-  flutter_application_path = '../'
-  eval(File.read(File.join(flutter_application_path, '.ios', 'Flutter', 'podhelper.rb')), binding)
-end
-PODFILE
+            echo "platform :ios, '15.0'" > ios/Podfile
+            echo "" >> ios/Podfile
+            echo "use_frameworks!" >> ios/Podfile
+            echo "use_modular_headers!" >> ios/Podfile
+            echo "" >> ios/Podfile
+            echo "target 'Runner' do" >> ios/Podfile
+            echo "  flutter_application_path = '../'" >> ios/Podfile
+            echo "  eval(File.read(File.join(flutter_application_path, '.ios', 'Flutter', 'podhelper.rb')), binding)" >> ios/Podfile
+            echo "end" >> ios/Podfile
           else
             echo "Updating existing Podfile..."
             sed -i.bak "s/platform :ios, '.*'/platform :ios, '15.0'/" ios/Podfile || echo "platform :ios, '15.0'" >> ios/Podfile
-          fi
 
-      - name: Clean & get dependencies
-        script: |
-          flutter clean
-          flutter pub get
-
-      - name: Build iOS release (no signing)
-        script: |
-          flutter build ios --release --no-codesign
-
-    artifacts:
-      - build/ios/ipa/*.ipa
-      - build/ios/iphoneos/*.app
-
-    publishing:
-      email:
-        recipients:
-          - your_email@example.com
 
