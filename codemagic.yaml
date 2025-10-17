@@ -6,23 +6,28 @@ workflows:
       xcode: latest
       cocoapods: default
 
-    scripts:
-      - name: Ensure iOS Project Files Exist & Clean
+   scripts:
+      - name: Ensure iOS Project Files Exist & Set iOS 15
         script: |
+          # 1. Clean and get dependencies (Ensures Podfile is created/updated by Flutter)
           flutter clean
           flutter pub get
-          # Force project files to be created/updated. This is CRUCIAL for the Podfile structure.
-          flutter create .
+          flutter create . # Re-runs project file generation
           
-          echo "🛠 Fixing Podfile target to iOS 15.0..."
-          # Use a more explicit sed pattern to find and replace the platform line.
-          # The '' after -i is required for macOS 'sed'.
-          # We use single quotes inside the main script block to ensure they are passed correctly.
-          sed -i '' 's/^platform :ios, .*/platform :ios, '\''15.0'\''/' ios/Podfile
+          echo "🛠 Setting Podfile platform to iOS 15.0..."
+          
+          # 2. **CRITICAL FIX**: Use sed to replace the deployment target. 
+          # The '^' ensures we only match the line starting with 'platform :ios,'.
+          # The -i '' is necessary for 'sed' on the macOS build machine.
+          # We use double-quotes around the whole command for safer escaping.
+          sed -i '' "s/^platform :ios, .*/platform :ios, '15.0'/" ios/Podfile
+          
+          # 3. Optional: Verify the change (will print the updated line)
+          grep "platform :ios" ios/Podfile
           
       - name: Build iOS release (no signing)
         script: |
-          # flutter build ios automatically runs pod install and builds the app
+          # flutter build ios now runs pod install with the correct iOS 15.0 target
           flutter build ios --release --no-codesign
 
 # ... rest of workflow
