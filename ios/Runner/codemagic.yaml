@@ -1,0 +1,46 @@
+workflows:
+  ios-release:
+    name: iOS Release Build
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      # --- Ajuste automático del Podfile a iOS 15 ---
+      - name: Set iOS deployment target
+        script: |
+          if [ -f "ios/Podfile" ]; then
+            echo "Updating Podfile to iOS 15.0..."
+            sed -i '' "s/platform :ios, '.*'/platform :ios, '15.0'/" ios/Podfile || echo "platform :ios, '15.0'" >> ios/Podfile
+          else
+            echo "Creating Podfile..."
+            cat > ios/Podfile <<EOF
+            platform :ios, '15.0'
+
+            use_frameworks!
+            use_modular_headers!
+
+            target 'Runner' do
+              flutter_application_path = '../'
+              eval(File.read(File.join(flutter_application_path, '.ios', 'Flutter', 'podhelper.rb')), binding)
+            end
+            EOF
+          fi
+
+      # --- Limpieza e instalación ---
+      - name: Clean & get dependencies
+        script: |
+          flutter clean
+          flutter pub get
+
+      # --- Build iOS Release ---
+      - name: Build iOS release (no signing)
+        script: flutter build ios --release --no-codesign
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - build/ios/iphoneos/*.app
+    publishing:
+      email:
+        recipients:
+          - your_email@example.com
