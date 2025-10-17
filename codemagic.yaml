@@ -1,12 +1,12 @@
 workflows:
-  ios-release:
-    name: iOS Release Build
-    environment:
-      flutter: stable
-      xcode: latest
-      cocoapods: default
+  ios-release: # 2 spaces
+    name: iOS Release Build # 4 spaces
+    environment: # 4 spaces
+      flutter: stable # 6 spaces
+      xcode: latest # 6 spaces
+      cocoapods: default # 6 spaces
 
-   scripts:
+    scripts:
       - name: Ensure iOS Project Files Exist & Set iOS 15
         script: |
           # 1. Clean and get dependencies (Ensures Podfile is created/updated by Flutter)
@@ -30,13 +30,11 @@ workflows:
           # flutter build ios now runs pod install with the correct iOS 15.0 target
           flutter build ios --release --no-codesign
 
-# ... rest of workflow
-
-    artifacts:
+    artifacts: # 4 spaces
       - build/ios/ipa/*.ipa
       - build/ios/iphoneos/*.app
 
-    publishing:
-      email:
-        recipients:
-          - your_email@example.com
+    publishing: # 4 spaces
+      email: # 6 spaces
+        recipients: # 8 spaces
+          - your_email@example.com # 10 spaces
