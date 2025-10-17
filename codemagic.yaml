@@ -7,37 +7,24 @@ workflows:
       cocoapods: default
 
     scripts:
-      - name: Ensure Podfile exists and set iOS 15
-        script: |
-          echo "🛠 Checking Podfile..."
-          mkdir -p ios
-          if [ ! -f "ios/Podfile" ]; then
-            {
-              echo "Creating new Podfile..."
-              echo "platform :ios, '15.0'" > ios/Podfile
-              echo "" >> ios/Podfile
-              echo "use_frameworks!" >> ios/Podfile
-              echo "use_modular_headers!" >> ios/Podfile
-              echo "" >> ios/Podfile
-              echo "target 'Runner' do" >> ios/Podfile
-              echo "  flutter_application_path = '../'" >> ios/Podfile
-              echo "  eval(File.read(File.join(flutter_application_path, '.ios', 'Flutter', 'podhelper.rb')), binding)" >> ios/Podfile
-              echo "end" >> ios/Podfile
-            }
-          else
-            {
-              echo "Updating existing Podfile..."
-              sed -i.bak "s/platform :ios, '.*'/platform :ios, '15.0'/" ios/Podfile || echo "platform :ios, '15.0'" >> ios/Podfile
-            }
-          fi
-
-      - name: Clean & get dependencies
+      - name: Ensure iOS Project Files Exist & Clean
+        # Running 'flutter create .' ensures the 'ios' folder and its content (including Podfile) 
+        # are created if they are missing or if the project was cloned without them.
         script: |
           flutter clean
           flutter pub get
-
+          # Force project files to be created/updated. This is CRUCIAL for the Podfile structure.
+          flutter create . 
+          
+          # Fix the iOS platform version in the generated Podfile
+          echo "🛠 Fixing Podfile target to iOS 15.0..."
+          # The sed command updates the platform version from the default (e.g., '12.0') to '15.0'.
+          # The standard path in the generated Podfile is generally correct, so we only modify the platform line.
+          sed -i '' 's/platform :ios, .*/platform :ios, '\''15.0'\''/' ios/Podfile
+          
       - name: Build iOS release (no signing)
         script: |
+          # flutter build ios automatically runs pod install and builds the app
           flutter build ios --release --no-codesign
 
     artifacts:
