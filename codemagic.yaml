@@ -8,24 +8,24 @@ workflows:
 
     scripts:
       - name: Ensure iOS Project Files Exist & Clean
-        # Running 'flutter create .' ensures the 'ios' folder and its content (including Podfile) 
-        # are created if they are missing or if the project was cloned without them.
         script: |
           flutter clean
           flutter pub get
           # Force project files to be created/updated. This is CRUCIAL for the Podfile structure.
-          flutter create . 
+          flutter create .
           
-          # Fix the iOS platform version in the generated Podfile
           echo "🛠 Fixing Podfile target to iOS 15.0..."
-          # The sed command updates the platform version from the default (e.g., '12.0') to '15.0'.
-          # The standard path in the generated Podfile is generally correct, so we only modify the platform line.
-          sed -i '' 's/platform :ios, .*/platform :ios, '\''15.0'\''/' ios/Podfile
+          # Use a more explicit sed pattern to find and replace the platform line.
+          # The '' after -i is required for macOS 'sed'.
+          # We use single quotes inside the main script block to ensure they are passed correctly.
+          sed -i '' 's/^platform :ios, .*/platform :ios, '\''15.0'\''/' ios/Podfile
           
       - name: Build iOS release (no signing)
         script: |
           # flutter build ios automatically runs pod install and builds the app
           flutter build ios --release --no-codesign
+
+# ... rest of workflow
 
     artifacts:
       - build/ios/ipa/*.ipa
