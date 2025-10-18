@@ -44,17 +44,39 @@ jobs:
           cat ios/Podfile
           echo "-----------------------------------"
 
-      - name: Build iOS
-        # flutter build ios will now run 'pod install' successfully 
-        # using the newly updated Podfile (with iOS 15.0) and the generated podhelper.rb.
-        run: flutter build ios --release --no-codesign
-
-      - name: Create IPA
+      - name: Force Pod Install with Repo Update (Crucial) ⚙️
+        # Change directory to 'ios' and run pod install with repository update.
+        # This resolves most long-running or stuck pod install issues.
         run: |
-          cd build/ios/iphoneos
-          mkdir Payload
-          cp -r Runner.app Payload/
-          zip -r app.ipa Payload
+          cd ios
+          pod install --repo-update
+        # Increase the step timeout to give CocoaPods enough time for the repository update
+        # You may need to adjust this (e.g., from 10 to 15 or 20 minutes) based on past build history.
+        timeout-minutes: 15
+
+      - name: Build iOS release
+        # The pods are now installed, so the build command will be much faster.
+        # We also add a timeout here as a safety measure.
+        run: flutter build ios --release --no-codesign
+        timeout-minutes: 20
+
+      - name: Create IPA and Upload artifact
+        # Combine the IPA creation and upload artifact steps
+        run: |
+          # The Runner.app is located inside the Release-iphoneos directory
+          APP_PATH="build/ios/iphoneos/Runner.app"
+          
+          if [ -d "$APP_PATH" ]; then
+            cd build/ios/iphoneos
+            mkdir Payload
+            cp -r Runner.app Payload/
+            zip -r app.ipa Payload
+            
+            echo "IPA created successfully."
+          else
+            echo "Error: Runner.app not found at expected path: $APP_PATH"
+            exit 1
+          fi
           
       - name: Upload artifact
         uses: actions/upload-artifact@v4
