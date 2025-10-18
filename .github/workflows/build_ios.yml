@@ -27,16 +27,22 @@ jobs:
           # generate the native project files on a clean CI environment.
           flutter create . 
           
-      - name: Fix iOS Deployment Target 🛠️
-        # This step fixes the "cloud_firestore requires iOS 15.0" error
+      - name: Fix iOS Deployment Target 🚀
         run: |
           echo "Setting platform :ios to '15.0' in Podfile..."
-          # sed command finds the platform line and replaces the version with 15.0
-          # The -i '' syntax is required for sed on macOS runners
+          
+          # 1. Ensure the platform line is UNCOMMENTED.
+          # We look for the line starting with '#' followed by 'platform :ios' and remove the '#'
+          sed -i '' 's/^# *platform :ios/platform :ios/' ios/Podfile
+          
+          # 2. Set the deployment version to 15.0.
+          # We now look for the UNCOMMENTED line starting with 'platform :ios' and set the version.
           sed -i '' "s/^platform :ios, .*/platform :ios, '15.0'/" ios/Podfile
           
-          # Optional: Check the Podfile content for verification in the logs
+          # Verification: print the Podfile content to confirm the fix
+          echo "--- Podfile content after fix ---"
           cat ios/Podfile
+          echo "-----------------------------------"
 
       - name: Build iOS
         # flutter build ios will now run 'pod install' successfully 
