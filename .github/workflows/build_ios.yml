@@ -17,10 +17,30 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.35.3'
-      - name: Install dependencies
-        run: flutter pub get
+          
+      - name: Install Dart dependencies and generate files
+        run: |
+          # 1. Get packages
+          flutter pub get
+          # 2. Force project files (like Podfile) to be generated/updated
+          # This is necessary because 'flutter create' is often needed to properly
+          # generate the native project files on a clean CI environment.
+          flutter create . 
+          
+      - name: Fix iOS Deployment Target 🛠️
+        # This step fixes the "cloud_firestore requires iOS 15.0" error
+        run: |
+          echo "Setting platform :ios to '15.0' in Podfile..."
+          # sed command finds the platform line and replaces the version with 15.0
+          # The -i '' syntax is required for sed on macOS runners
+          sed -i '' "s/^platform :ios, .*/platform :ios, '15.0'/" ios/Podfile
+          
+          # Optional: Check the Podfile content for verification in the logs
+          cat ios/Podfile
 
-      - name: Build iOs
+      - name: Build iOS
+        # flutter build ios will now run 'pod install' successfully 
+        # using the newly updated Podfile (with iOS 15.0) and the generated podhelper.rb.
         run: flutter build ios --release --no-codesign
 
       - name: Create IPA
@@ -29,6 +49,7 @@ jobs:
           mkdir Payload
           cp -r Runner.app Payload/
           zip -r app.ipa Payload
+          
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
